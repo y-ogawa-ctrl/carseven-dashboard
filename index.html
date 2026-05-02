@@ -97,7 +97,7 @@ tr:hover td{background:#fafafa}
     <div class="cards" id="cards"></div>
     <div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">車両受領予定日が超過（未受領）</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領予定日</th><th>超過日数</th><th>状況</th></tr></thead><tbody id="t1"></tbody></table></div>
-    <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">自社名変遅延（車両受領→名変完了が10日以上）</span></div>
+    <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">自社名変遅延</span><span class="sec-note">名変完了が10日以上 / 受領後10日以上経過しても名変完了日が未記入</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>名変完了日</th><th>遅延日数</th><th>状況</th></tr></thead><tbody id="t2"></tbody></table></div>
     <div class="sec"><div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">車両代金支払遅延</span><span class="sec-note">受領日から7日超かつ支払完了✓未入力</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t3"></tbody></table></div>
@@ -270,9 +270,22 @@ function calcAlarms(rows) {
       if(m){const d=guessYearDate(+m[1],+m[2]);over=diffDays(d,TODAY);}
       a1.push({...r,over});
     }
-    if(!isBlank(rcvStr)&&!isBlank(r.meik)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)) {
-      const d1=parseDate(rcvStr),d2=parseDate(r.meik);
-      if(d1&&d2){const dd=diffDays(d1,d2);if(dd>=10)a2.push({...r,days:dd});}
+    if(!isBlank(rcvStr)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)) {
+      const d1=parseDate(rcvStr);
+      if(d1) {
+        if(!isBlank(r.meik)) {
+          // パターンA: 名変完了日が記入済み → 受領日→名変完了日の差が10日以上
+          const d2=parseDate(r.meik);
+          if(d2){
+            const dd=diffDays(d1,d2);
+            if(dd>=10)a2.push({...r,days:dd,kind:'completed'});
+          }
+        } else {
+          // パターンB: 名変完了日が空欄 → 受領日→今日の経過が10日以上
+          const dd=diffDays(d1,TODAY);
+          if(dd>=10)a2.push({...r,days:dd,kind:'pending'});
+        }
+      }
     }
     if(!isBlank(rcvStr)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)&&r.payChk!==null) {
       if(!isPayOk(r.payChk)) {
@@ -326,7 +339,12 @@ function render() {
 
   document.getElementById('cards').innerHTML =
     cardSplit('c-red','受領状況','超過',a1over,a1over?'最大 '+a1maxOver+' 日':'','入庫予定',a1future,a1nearestFuture!==null?'最短 '+Math.abs(a1nearestFuture)+' 日後':'')+
-    card('c-amber','自社名変遅延',a2.length,a2.length?'最大 '+a2max+' 日':'')+
+    (() => {
+      const a2pending = a2.filter(r=>r.kind==='pending').length;
+      const a2done = a2.filter(r=>r.kind==='completed').length;
+      const sub = a2.length ? '未完了 '+a2pending+'件　／　超過 '+a2done+'件' : '';
+      return card('c-amber','自社名変遅延',a2.length,sub);
+    })()+
     card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
     card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
 
@@ -341,8 +359,20 @@ function render() {
   }).join('') : noRow(7);
 
   document.getElementById('t2').innerHTML = a2.length ? a2.map(r=>{
-    const b=r.days>=20?badge('#d93030','大幅遅延 '+r.days+'日'):r.days>=15?badge('#c07000','遅延 '+r.days+'日'):badge('#185fa5',r.days+'日');
-    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td>${r.meik}</td><td class="${r.days>=15?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+    const isPending = r.kind==='pending';
+    let b;
+    if(isPending){
+      b = r.days>=30 ? badge('#d93030','未完了 '+r.days+'日経過') :
+          r.days>=20 ? badge('#c07000','未完了 '+r.days+'日経過') :
+                      badge('#c07000','未完了 '+r.days+'日経過');
+    } else {
+      b = r.days>=20 ? badge('#d93030','大幅遅延 '+r.days+'日') :
+          r.days>=15 ? badge('#c07000','遅延 '+r.days+'日') :
+                      badge('#185fa5',r.days+'日');
+    }
+    const meikDisp = isPending ? '<span style="color:#d93030;font-weight:600">未完了</span>' : r.meik;
+    const tdClass = isPending ? 'td-red' : (r.days>=15?'td-red':'td-amber');
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td>${meikDisp}</td><td class="${tdClass}">${r.days}日</td><td>${b}</td></tr>`;
   }).join('') : noRow(8);
 
   document.getElementById('t3').innerHTML = a3.length ? a3.map(r=>{
