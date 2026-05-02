@@ -97,7 +97,7 @@ tr:hover td{background:#fafafa}
     <div class="cards" id="cards"></div>
     <div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">車両受領予定日が超過（未受領）</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領予定日</th><th>超過日数</th><th>状況</th></tr></thead><tbody id="t1"></tbody></table></div>
-    <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">自社名変遅延</span><span class="sec-note">名変完了が10日以上 / 受領後10日以上経過しても名変完了日が未記入</span></div>
+    <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">自社名変・抹消手続き遅延</span><span class="sec-note">名変完了が10日以上 / 受領後10日以上経過しても名変完了日が未記入</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>名変完了日</th><th>遅延日数</th><th>状況</th></tr></thead><tbody id="t2"></tbody></table></div>
     <div class="sec"><div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">車両代金支払遅延</span><span class="sec-note">受領日から7日超かつ支払完了✓未入力</span></div>
     <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t3"></tbody></table></div>
@@ -343,7 +343,7 @@ function render() {
 
   document.getElementById('cards').innerHTML =
     cardSplit('c-red','受領状況','超過',a1over,a1over?'最大 '+a1maxOver+' 日':'','入庫予定',a1future,a1nearestFuture!==null?'最短 '+Math.abs(a1nearestFuture)+' 日後':'')+
-    card('c-amber','自社名変遅延',a2.length,a2sub)+
+    card('c-amber','自社名変・抹消手続き遅延',a2.length,a2sub)+
     card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
     card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
 
