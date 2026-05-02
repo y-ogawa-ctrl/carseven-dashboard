@@ -278,8 +278,13 @@ function render() {
     card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
 
   document.getElementById('t1').innerHTML = a1.length ? a1.map(r=>{
-    const b=r.over>30?badge('#d93030','超過'+r.over+'日'):r.over>0?badge('#c07000','超過'+r.over+'日'):r.over===0?badge('#c07000','本日期限'):badge('#185fa5','未来日');
-    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="${r.over>0?'td-red':''}">${r.over>0?'+'+r.over+'日':'-'}</td><td>${b}</td></tr>`;
+    let b, dispDays, tdClass='';
+    if(r.over===null){ b=badge('#999','日付不明'); dispDays='-'; }
+    else if(r.over>30){ b=badge('#d93030','超過 '+r.over+'日'); dispDays='+'+r.over+'日'; tdClass='td-red'; }
+    else if(r.over>0){ b=badge('#c07000','超過 '+r.over+'日'); dispDays='+'+r.over+'日'; tdClass='td-red'; }
+    else if(r.over===0){ b=badge('#c07000','本日期限'); dispDays='0日'; tdClass='td-amber'; }
+    else { b=badge('#185fa5','未来日 '+r.over+'日'); dispDays=r.over+'日'; }
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="${tdClass}">${dispDays}</td><td>${b}</td></tr>`;
   }).join('') : noRow(7);
 
   document.getElementById('t2').innerHTML = a2.length ? a2.map(r=>{
