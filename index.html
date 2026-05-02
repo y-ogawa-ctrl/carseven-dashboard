@@ -282,13 +282,14 @@ function render() {
   document.getElementById('filter-info').textContent = parts.length?'絞り込み中：'+parts.join('　'):'';
 
   const a1over=a1.filter(r=>r.over>0).length;
+  const a1future=a1.filter(r=>r.over!==null && r.over<0).length;
   const a2max=a2.length?Math.max(...a2.map(r=>r.days)):0;
   const a3max=a3.length?Math.max(...a3.map(r=>r.elapsed)):0;
   const a4pend=a4.filter(r=>r.status==='手続き未実施').length;
   const a4paid=a4.filter(r=>r.status==='還付未入金').length;
 
   document.getElementById('cards').innerHTML =
-    card('c-red','受領未了（予定日超過）',a1over,'超過済み '+a1.filter(r=>r.over>0).length+'件')+
+    card('c-red','受領未了（予定日超過）',a1over,'超過済み '+a1over+'件　／　入庫予定 '+a1future+'件')+
     card('c-amber','書類遅延 3日超',a2.length,a2.length?'最大 '+a2max+' 日':'')+
     card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
     card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
