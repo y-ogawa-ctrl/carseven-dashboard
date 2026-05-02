@@ -342,7 +342,7 @@ function render() {
   const a2sub = a2.length ? '未完了 '+a2pending+'件　／　超過 '+a2done+'件' : '';
 
   document.getElementById('cards').innerHTML =
-    cardSplit('c-red','受領状況','超過',a1over,a1over?'最大 '+a1maxOver+' 日':'','入庫予定',a1future,a1nearestFuture!==null?'最短 '+Math.abs(a1nearestFuture)+' 日後':'')+
+    cardSplit('c-red','車両受領状況','超過',a1over,a1over?'最大 '+a1maxOver+' 日':'','入庫予定',a1future,a1nearestFuture!==null?'最短 '+Math.abs(a1nearestFuture)+' 日後':'')+
     card('c-amber','自社名変・抹消手続き遅延',a2.length,a2sub)+
     card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
     card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
