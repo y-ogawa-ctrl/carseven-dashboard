@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>カーセブン 週次MTGダッシュボード</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'ヒラギノ角ゴ Pro',sans-serif;background:#f0f2f5;color:#222}
+.wrap{max-width:1400px;margin:0 auto;padding:20px}
+h1{font-size:19px;font-weight:700;margin-bottom:2px}
+.subtitle{font-size:11px;color:#999;margin-bottom:16px}
+
+/* ローディング */
+#loading{text-align:center;padding:60px;color:#666}
+.spinner{width:40px;height:40px;border:4px solid #e0e0e0;border-top-color:#185fa5;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* フィルター */
+.filter-bar{background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.filter-label{font-size:11px;font-weight:700;color:#555;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.chip{padding:4px 12px;border-radius:20px;border:1.5px solid #ddd;font-size:12px;cursor:pointer;background:#fff;color:#555;transition:all .12s}
+.chip.active-blue{background:#185fa5;color:#fff;border-color:#185fa5;font-weight:600}
+.chip.active-purple{background:#6c3dc7;color:#fff;border-color:#6c3dc7;font-weight:600}
+.chip:hover{border-color:#aaa}
+.filter-footer{display:flex;align-items:center;gap:10px}
+.btn-reset{padding:6px 16px;border-radius:6px;border:1px solid #ddd;background:#fff;font-size:12px;cursor:pointer;color:#555}
+.btn-reset:hover{background:#f5f5f5}
+.filter-info{font-size:12px;color:#185fa5;font-weight:500}
+
+/* サマリーカード */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.card{border-radius:10px;padding:14px 16px;border:1px solid}
+.card-label{font-size:11px;font-weight:600;margin-bottom:6px}
+.card-val{font-size:28px;font-weight:700}
+.card-sub{font-size:11px;margin-top:3px;opacity:.8}
+.c-red  {background:#fef0f0;border-color:#f5a5a5;--txt:#b52b2b;--val:#e03030}
+.c-amber{background:#fff8ec;border-color:#f5cc80;--txt:#7a4500;--val:#c07000}
+.c-blue {background:#eef5fd;border-color:#a8ceef;--txt:#0d4278;--val:#185fa5}
+.c-green{background:#edf7e4;border-color:#b2d98a;--txt:#3a6b10;--val:#3a6b10}
+.card-label,.card-sub{color:var(--txt)}
+.card-val{color:var(--val)}
+
+/* テーブルセクション */
+.sec{background:#fff;border-radius:10px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px}
+.tag-red  {background:#fde8e8;color:#a32020}
+.tag-amber{background:#fdf0d8;color:#7a4500}
+.tag-blue {background:#e3eefa;color:#0d4278}
+.tag-green{background:#e8f5da;color:#3a6b10}
+.sec-title{font-size:13px;font-weight:700}
+.sec-note{font-size:11px;color:#999;background:#f5f5f5;padding:2px 8px;border-radius:4px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;color:#777;font-weight:600;text-align:left;padding:6px 8px;border-bottom:2px solid #eee;white-space:nowrap}
+td{padding:6px 8px;font-size:12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+tr:hover td{background:#fafafa}
+.td-dim{color:#888}
+.td-red{color:#d93030;font-weight:600}
+.td-amber{color:#c07000;font-weight:600}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;color:#fff}
+.no-data td{text-align:center;padding:24px;color:#aaa;font-size:13px}
+
+/* エラーバナー */
+.error-box{background:#fde8e8;border:1px solid #f5a5a5;border-radius:8px;padding:14px 18px;margin-bottom:18px;color:#a32020;font-size:13px}
+
+/* 設定モーダル */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:90%;max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.modal h2{font-size:16px;margin-bottom:16px}
+.modal label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
+.modal input{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:14px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end}
+.btn-primary{background:#185fa5;color:#fff;padding:8px 20px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:#0f4a8a}
+.btn-cancel{background:#fff;color:#555;padding:8px 16px;border:1px solid #ddd;border-radius:6px;font-size:13px;cursor:pointer}
+.btn-settings{position:fixed;bottom:20px;right:20px;background:#185fa5;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+
+@media(max-width:768px){.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>カーセブン 週次MTG アラームダッシュボード</h1>
+  <p class="subtitle" id="subtitle">データ読み込み中...</p>
+
+  <div id="error-area"></div>
+  <div id="loading"><div class="spinner"></div>スプレッドシートからデータを取得中...<br><small style="color:#bbb;margin-top:8px;display:block">初回は30〜60秒かかる場合があります</small></div>
+  <div id="main" style="display:none">
+    <div class="filter-bar">
+      <div class="filter-label">🏪 店舗</div>
+      <div class="chips" id="store-chips"></div>
+      <div class="filter-label">📅 月（複数選択可・未選択=全月）</div>
+      <div class="chips" id="month-chips"></div>
+      <div class="filter-footer">
+        <button class="btn-reset" onclick="resetFilter()">リセット</button>
+        <span class="filter-info" id="filter-info"></span>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">車両受領予定日が超過（未受領）</span></div>
+      <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領予定日</th><th>超過日数</th><th>状況</th></tr></thead>
+      <tbody id="t1"></tbody></table>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">車両受領→名変完了が3日以上遅延</span></div>
+      <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>名変完了日</th><th>遅延日数</th><th>状況</th></tr></thead>
+      <tbody id="t2"></tbody></table>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">車両代金支払遅延</span><span class="sec-note">受領日から7日超かつ支払完了✓未入力（旧シート除く）</span></div>
+      <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead>
+      <tbody id="t3"></tbody></table>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">自動車税還付 未完了（自社名変・普通車）</span></div>
+      <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>区分</th><th>担当</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>状況</th></tr></thead>
+      <tbody id="t4"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- GAS URL設定モーダル -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2>⚙️ GAS APIのURL設定</h2>
+    <label>GAS WebApp URL</label>
+    <input type="text" id="gas-url-input" placeholder="https://script.google.com/a/macros/carseven.jp/s/..." />
+    <p style="font-size:11px;color:#999;margin-top:-10px;margin-bottom:14px">GASをデプロイして発行されたURLを入力してください</p>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="saveAndLoad()">保存して読み込む</button>
+    </div>
+  </div>
+</div>
+<button class="btn-settings" onclick="openModal()" title="GAS URL設定">⚙️</button>
+
+<script>
+// ===== 設定 =====
+const GAS_URL_KEY = 'carseven_gas_url';
+let gasUrl = localStorage.getItem(GAS_URL_KEY) || '';
+
+// ===== 状態 =====
+let allRows = [];
+let selStore = '全店舗';
+let selMonths = [];
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+// ===== 起動 =====
+window.onload = function() {
+  if (!gasUrl) { openModal(); return; }
+  loadData();
+};
+
+// ===== データ取得 =====
+async function loadData() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('error-area').innerHTML = '';
+  try {
+    const res = await fetch(gasUrl);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'APIエラー');
+    allRows = json.data;
+    const genAt = new Date(json.generatedAt).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'});
+    document.getElementById('subtitle').textContent = '生成日時: ' + genAt + '　全' + allRows.length + '件';
+    initFilters();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+    render();
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-area').innerHTML =
+      '<div class="error-box">❌ データ取得エラー: ' + e.message + '<br><small>GAS URLを確認してください（⚙️ボタン）</small></div>';
+  }
+}
+
+// ===== フィルター初期化 =====
+function initFilters() {
+  const stores = ['全店舗','川崎宮崎台','所沢','相模原陽光台','23号鈴鹿','八王子多摩','湘南平塚','昭島','静岡流通通り'];
+  const months = [...new Set(allRows.map(r=>r.month))].sort();
+
+  document.getElementById('store-chips').innerHTML = stores.map(s => {
+    const short = s.replace('川崎宮崎台','宮崎台').replace('相模原陽光台','陽光台')
+      .replace('23号鈴鹿','鈴鹿').replace('八王子多摩','八王子').replace('静岡流通通り','静岡');
+    return `<button class="chip ${s===selStore?'active-blue':''}" id="sc_${s}" onclick="selStoreClick('${s}')">${s==='全店舗'?'全店舗':short}</button>`;
+  }).join('');
+
+  document.getElementById('month-chips').innerHTML = months.map(m => {
+    const label = m.slice(0,2)+'年'+m.slice(2)+'月';
+    return `<button class="chip ${selMonths.includes(m)?'active-purple':''}" id="mc_${m}" onclick="toggleMonth('${m}')">${label}</button>`;
+  }).join('');
+}
+
+function selStoreClick(s) {
+  selStore = s;
+  document.querySelectorAll('#store-chips .chip').forEach(b => b.classList.remove('active-blue'));
+  const el = document.getElementById('sc_'+s);
+  if(el) el.classList.add('active-blue');
+  render();
+}
+
+function toggleMonth(m) {
+  const idx = selMonths.indexOf(m);
+  if(idx>=0) selMonths.splice(idx,1); else selMonths.push(m);
+  const el = document.getElementById('mc_'+m);
+  if(el) el.classList.toggle('active-purple', selMonths.includes(m));
+  render();
+}
+
+function resetFilter() { selStore='全店舗'; selMonths=[]; initFilters(); render(); }
+
+// ===== フィルタリング =====
+function filtered() {
+  return allRows.filter(r => {
+    if(selStore!=='全店舗' && r.store!==selStore) return false;
+    if(selMonths.length>0 && !selMonths.includes(r.month)) return false;
+    return true;
+  });
+}
+
+// ===== 日付パース =====
+function parseDate(val) {
+  if(!val) return null;
+  const s = String(val).trim();
+  let m;
+  if((m=s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/))) return new Date(+m[1],+m[2]-1,+m[3]);
+  if((m=s.match(/^(\d{1,2})月(\d{1,2})日$/))) {
+    const mo=+m[1],da=+m[2];
+    return new Date(mo<=4?2026:2025,mo-1,da);
+  }
+  if((m=s.match(/^(\d{1,2})\/(\d{1,2})$/))) {
+    const mo=+m[1],da=+m[2];
+    return new Date(mo<=4?2026:2025,mo-1,da);
+  }
+  return null;
+}
+function diffDays(a,b) { return a&&b ? Math.round((b-a)/86400000) : null; }
+function isBlank(v) { return !v||String(v).trim()===''||String(v).trim()==='－'||String(v).trim()==='-'; }
+function isScheduled(v) { return String(v).includes('予定')||String(v).includes('以降'); }
+function isCancelled(v) { return String(v).includes('キャンセル')||String(v).toLowerCase().includes('cancel'); }
+function isPayOk(v) { if(!v&&v!==0)return false; const s=String(v).trim(); return s!==''&&s!=='－'&&s!=='-'; }
+
+// ===== アラーム算出 =====
+function calcAlarms(rows) {
+  const a1=[],a2=[],a3=[],a4=[];
+  rows.forEach(r => {
+    const rcvStr=r.rcv, custName=r.cust, carName=r.car;
+
+    // アラーム1
+    if(isScheduled(rcvStr)&&!isCancelled(rcvStr)&&custName&&carName) {
+      const m=rcvStr.match(/(\d{1,2})\/(\d{1,2})/);
+      let over=null;
+      if(m){const mo=+m[1],da=+m[2];const d=new Date(mo<=4?2026:2025,mo-1,da);over=diffDays(d,TODAY);}
+      a1.push({...r,over});
+    }
+
+    // アラーム2
+    if(!isBlank(rcvStr)&&!isBlank(r.meik)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)) {
+      const d1=parseDate(rcvStr),d2=parseDate(r.meik);
+      if(d1&&d2){const dd=diffDays(d1,d2);if(dd>=4)a2.push({...r,days:dd});}
+    }
+
+    // アラーム3
+    if(!isBlank(rcvStr)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)&&r.payChk!==null) {
+      if(!isPayOk(r.payChk)) {
+        const d=parseDate(rcvStr);
+        if(d){const el=diffDays(d,TODAY);if(el>7&&custName&&carName)a3.push({...r,elapsed:el});}
+      }
+    }
+
+    // アラーム4
+    if(r.doc&&r.doc.includes('自社名変')&&r.type!=='軽') {
+      let status='';
+      if(isBlank(r.taxProc))status='手続き未実施';
+      else if(isBlank(r.taxDate))status='還付未入金';
+      if(status)a4.push({...r,status});
+    }
+  });
+  return {a1,a2,a3,a4};
+}
+
+// ===== バッジ/ユーティリティ =====
+function badge(color,label){return`<span class="badge" style="background:${color}">${label}</span>`}
+function noRow(cols){return`<tr class="no-data"><td colspan="${cols}">対象案件なし</td></tr>`}
+
+// ===== 描画 =====
+function render() {
+  const rows = filtered();
+  const {a1,a2,a3,a4} = calcAlarms(rows);
+
+  // フィルター情報
+  const parts=[];
+  if(selStore!=='全店舗')parts.push('店舗：'+selStore);
+  if(selMonths.length>0)parts.push('月：'+selMonths.map(m=>m.slice(0,2)+'年'+m.slice(2)+'月').join('・'));
+  document.getElementById('filter-info').textContent = parts.length?'絞り込み中：'+parts.join('　'):'';
+
+  // カード
+  const a1over=a1.filter(r=>r.over>0).length;
+  const a2max=a2.length?Math.max(...a2.map(r=>r.days)):0;
+  const a3max=a3.length?Math.max(...a3.map(r=>r.elapsed)):0;
+  const a4pend=a4.filter(r=>r.status==='手続き未実施').length;
+  const a4paid=a4.filter(r=>r.status==='還付未入金').length;
+
+  document.getElementById('cards').innerHTML =
+    card('c-red','受領未了（予定日超過）',a1over,'超過済み '+a1.filter(r=>r.over>0).length+'件')+
+    card('c-amber','書類遅延 3日超',a2.length,a2.length?'最大 '+a2max+' 日':'')+
+    card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
+    card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
+
+  // テーブル1
+  document.getElementById('t1').innerHTML = a1.length ? a1.map(r=>{
+    const b=r.over>30?badge('#d93030','超過'+r.over+'日'):r.over>0?badge('#c07000','超過'+r.over+'日'):r.over===0?badge('#c07000','本日期限'):badge('#185fa5','未来日');
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="${r.over>0?'td-red':''}">${r.over>0?'+'+r.over+'日':'-'}</td><td>${b}</td></tr>`;
+  }).join('') : noRow(7);
+
+  // テーブル2
+  document.getElementById('t2').innerHTML = a2.length ? a2.map(r=>{
+    const b=r.days>=10?badge('#d93030','大幅遅延 '+r.days+'日'):r.days>=5?badge('#c07000','遅延 '+r.days+'日'):badge('#185fa5',r.days+'日');
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td>${r.meik}</td><td class="${r.days>=5?'td-red':''}">${r.days}日</td><td>${b}</td></tr>`;
+  }).join('') : noRow(8);
+
+  // テーブル3
+  document.getElementById('t3').innerHTML = a3.length ? a3.map(r=>{
+    const b=r.elapsed>14?badge('#d93030','超過 '+r.elapsed+'日'):badge('#c07000','遅延 '+r.elapsed+'日');
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="td-dim">${r.payChk||'未記入'}</td><td class="${r.elapsed>14?'td-red':'td-amber'}">${r.elapsed}日</td><td>${b}</td></tr>`;
+  }).join('') : noRow(8);
+
+  // テーブル4
+  document.getElementById('t4').innerHTML = a4.length ? a4.map(r=>{
+    const b=r.status==='手続き未実施'?badge('#d93030','手続き未実施'):badge('#d93030','還付未入金');
+    return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.type}</td><td>${r.tant}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${r.taxProc||'-'}</td><td>${r.taxDate||'-'}</td><td>${b}</td></tr>`;
+  }).join('') : noRow(9);
+}
+
+function card(cls,label,count,sub) {
+  return`<div class="card ${cls}"><div class="card-label">${label}</div><div class="card-val">${count}</div><div class="card-sub">${sub}</div></div>`;
+}
+
+// ===== モーダル =====
+function openModal() {
+  document.getElementById('gas-url-input').value = gasUrl;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function saveAndLoad() {
+  const url = document.getElementById('gas-url-input').value.trim();
+  if(!url){alert('URLを入力してください');return;}
+  gasUrl = url;
+  localStorage.setItem(GAS_URL_KEY, url);
+  closeModal();
+  loadData();
+}
+</script>
+</body>
+</html>
