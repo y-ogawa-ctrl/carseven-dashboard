@@ -67,6 +67,12 @@ tr:hover td{background:#fafafa}
 .btn-primary:hover{background:#0f4a8a}
 .btn-cancel{background:#fff;color:#555;padding:8px 16px;border:1px solid #ddd;border-radius:6px;font-size:13px;cursor:pointer}
 .btn-settings{position:fixed;bottom:20px;right:20px;background:#185fa5;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.btn-reload{position:fixed;bottom:20px;right:80px;background:#0aa56e;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:20px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:transform .2s}
+.btn-reload:hover{transform:rotate(180deg)}
+.btn-reload:disabled{opacity:.5;cursor:not-allowed}
+.btn-reload-inline{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:6px;border:1px solid #0aa56e;background:#fff;color:#0aa56e;font-size:12px;font-weight:600;cursor:pointer;margin-left:8px}
+.btn-reload-inline:hover{background:#0aa56e;color:#fff}
+.btn-reload-inline:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:768px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -84,6 +90,7 @@ tr:hover td{background:#fafafa}
       <div class="chips" id="month-chips"></div>
       <div class="filter-footer">
         <button class="btn-reset" onclick="resetFilter()">リセット</button>
+        <button class="btn-reload-inline" id="btn-reload-inline" onclick="loadData()" title="最新データに更新">🔄 更新</button>
         <span class="filter-info" id="filter-info"></span>
       </div>
     </div>
@@ -108,6 +115,7 @@ tr:hover td{background:#fafafa}
     <button class="btn-primary" onclick="saveAndLoad()">保存して読み込む</button>
   </div>
 </div></div>
+<button class="btn-reload" id="btn-reload" onclick="loadData()" title="最新データに更新">🔄</button>
 <button class="btn-settings" onclick="openModal()" title="GAS URL設定">⚙️</button>
 
 <script>
@@ -124,7 +132,15 @@ window.onload = function() {
 };
 
 // ===== JSONP方式でデータ取得 =====
+function setReloadDisabled(disabled) {
+  ['btn-reload', 'btn-reload-inline'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
 function loadData() {
+  setReloadDisabled(true);
   document.getElementById('loading').style.display = 'block';
   document.getElementById('main').style.display = 'none';
   document.getElementById('error-area').innerHTML = '';
@@ -141,6 +157,7 @@ function loadData() {
   const cbName = 'cs_callback_' + Date.now();
   
   function cleanup() {
+    setReloadDisabled(false);
     clearTimeout(timeoutId);
     if (window[cbName]) delete window[cbName];
     const scriptEl = document.getElementById(cbName);
