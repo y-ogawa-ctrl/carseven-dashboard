@@ -206,13 +206,29 @@ function filtered() {
     return true;
   });
 }
+function guessYearDate(mo, da) {
+  // 今日に最も近い年を選ぶ（前後6ヶ月以内）
+  const ty = TODAY.getFullYear();
+  const candidates = [
+    new Date(ty - 1, mo - 1, da),
+    new Date(ty,     mo - 1, da),
+    new Date(ty + 1, mo - 1, da),
+  ];
+  let best = candidates[0];
+  let bestDiff = Math.abs(candidates[0] - TODAY);
+  for (let i = 1; i < candidates.length; i++) {
+    const d = Math.abs(candidates[i] - TODAY);
+    if (d < bestDiff) { best = candidates[i]; bestDiff = d; }
+  }
+  return best;
+}
 function parseDate(val) {
   if(!val) return null;
   const s = String(val).trim();
   let m;
   if((m=s.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/))) return new Date(+m[1],+m[2]-1,+m[3]);
-  if((m=s.match(/^(\d{1,2})月(\d{1,2})日$/))) { const mo=+m[1],da=+m[2]; return new Date(mo<=4?2026:2025,mo-1,da); }
-  if((m=s.match(/^(\d{1,2})\/(\d{1,2})$/))) { const mo=+m[1],da=+m[2]; return new Date(mo<=4?2026:2025,mo-1,da); }
+  if((m=s.match(/^(\d{1,2})月(\d{1,2})日$/))) { return guessYearDate(+m[1],+m[2]); }
+  if((m=s.match(/^(\d{1,2})\/(\d{1,2})$/))) { return guessYearDate(+m[1],+m[2]); }
   return null;
 }
 function diffDays(a,b) { return a&&b ? Math.round((b-a)/86400000) : null; }
@@ -228,7 +244,7 @@ function calcAlarms(rows) {
     if(isScheduled(rcvStr)&&!isCancelled(rcvStr)&&custName&&carName) {
       const m=rcvStr.match(/(\d{1,2})\/(\d{1,2})/);
       let over=null;
-      if(m){const mo=+m[1],da=+m[2];const d=new Date(mo<=4?2026:2025,mo-1,da);over=diffDays(d,TODAY);}
+      if(m){const d=guessYearDate(+m[1],+m[2]);over=diffDays(d,TODAY);}
       a1.push({...r,over});
     }
     if(!isBlank(rcvStr)&&!isBlank(r.meik)&&!isScheduled(rcvStr)&&!isCancelled(rcvStr)) {
