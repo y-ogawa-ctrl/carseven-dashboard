@@ -588,7 +588,7 @@ function salesRender() {
               r.days>=14 ? badge('#d93030','大幅遅延 '+r.days+'日') :
               badge('#c07000','遅延 '+r.days+'日');
     const carOutDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.carOut;
-    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${carOutDisp}</td><td class="${isPending||r.days>=14?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${carOutDisp}</td><td class="${isPending||r.days>=14?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
   }).join('') : noRow(8);
 
   document.getElementById('sales-t2').innerHTML = a2.length ? a2.map(r=>{
@@ -597,12 +597,12 @@ function salesRender() {
               r.days>=20 ? badge('#d93030','大幅遅延 '+r.days+'日') :
               badge('#c07000','遅延 '+r.days+'日');
     const regDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.regReq;
-    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${regDisp}</td><td class="${isPending||r.days>=20?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${regDisp}</td><td class="${isPending||r.days>=20?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
   }).join('') : noRow(8);
 
   document.getElementById('sales-t3').innerHTML = a3.length ? a3.map(r=>{
     const b = r.days>=22 ? badge('#d93030','大幅遅延 '+r.days+'日') : badge('#c07000','遅延 '+r.days+'日');
-    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td><span style="color:#d93030;font-weight:600">${r.payOk||'未記入'}</span></td><td class="${r.days>=22?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td><span style="color:#d93030;font-weight:600">${r.payOk||'未記入'}</span></td><td class="${r.days>=22?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
   }).join('') : noRow(8);
 
   document.getElementById('sales-t4').innerHTML = a4.length ? a4.map(r=>{
@@ -611,7 +611,7 @@ function salesRender() {
               r.days>=22 ? badge('#d93030','大幅遅延 '+r.days+'日') :
               badge('#c07000','遅延 '+r.days+'日');
     const delDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.delivered;
-    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${delDisp}</td><td class="${isPending||r.days>=22?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+    return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${delDisp}</td><td class="${isPending||r.days>=22?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
   }).join('') : noRow(8);
 }
 </script>
