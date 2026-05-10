@@ -105,13 +105,13 @@ tr:hover td{background:#fafafa}
 </div>
 <div class="cards" id="cards"></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">車両受領予定日が超過（未受領）</span></div>
-<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領予定日</th><th>超過日数</th><th>状況</th></tr></thead><tbody id="t1"></tbody></table></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>契約日</th><th>受領予定日</th><th>超過日数</th><th>状況</th></tr></thead><tbody id="t1"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">自社名変・抹消手続き遅延</span><span class="sec-note">名変完了日が未記入かつ受領後10日以上経過</span></div>
-<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>名変完了日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t2"></tbody></table></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>契約日</th><th>受領日</th><th>名変完了日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t2"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">車両代金支払遅延</span><span class="sec-note">受領日から7日超かつ支払完了✓未入力</span></div>
-<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t3"></tbody></table></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>担当</th><th>契約日</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t3"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">自動車税還付 未完了（自社名変・普通車）</span></div>
-<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>区分</th><th>担当</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>状況</th></tr></thead><tbody id="t4"></tbody></table></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>区分</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>状況</th></tr></thead><tbody id="t4"></tbody></table></div>
 </div>
 
 <!-- 販売納車項目管理ダッシュボード -->
@@ -126,13 +126,13 @@ tr:hover td{background:#fafafa}
 </div>
 </div>
 <div class="cards" id="sales-cards"></div>
-<div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">整備工場 車両出庫遅延</span><span class="sec-note">契約日から6日超過</span></div>
+<div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">整備工場 車両出庫遅延</span><span class="sec-note">車両出庫日が未記入かつ契約日から7日以上経過</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>車両出庫日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t1"></tbody></table></div>
-<div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">登録依頼遅延</span><span class="sec-note">契約日から13日超過</span></div>
+<div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">登録依頼遅延</span><span class="sec-note">登録依頼日が未記入かつ契約日から13日以上経過</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>登録依頼日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t2"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">入金未完了</span><span class="sec-note">契約日から15日超過、入金OK欄が未記入</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>入金OK</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t3"></tbody></table></div>
-<div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">納車遅延</span><span class="sec-note">契約日から15日超過、納車完了日が未記入も含む</span></div>
+<div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">納車遅延</span><span class="sec-note">納車完了日が未記入かつ契約日から14日以上経過</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>納車完了日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t4"></tbody></table></div>
 </div>
 </div>
@@ -402,8 +402,8 @@ else if(r.over>30){ b=badge('#d93030','超過 '+r.over+'日'); dispDays='+'+r.ov
 else if(r.over>0){ b=badge('#c07000','超過 '+r.over+'日'); dispDays='+'+r.over+'日'; tdClass='td-red'; }
 else if(r.over===0){ b=badge('#c07000','本日期限'); dispDays='0日'; tdClass='td-amber'; }
 else { b=badge('#185fa5','未来日 '+r.over+'日'); dispDays=r.over+'日'; }
-return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="${tdClass}">${dispDays}</td><td>${b}</td></tr>`;
-}).join('') : noRow(7);
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.rcv}</td><td class="${tdClass}">${dispDays}</td><td>${b}</td></tr>`;
+}).join('') : noRow(8);
 
 // アラーム2: 未記入のみなので状況バッジは経過日数で色分け
 document.getElementById('t2').innerHTML = a2.length ? a2.map(r=>{
@@ -412,18 +412,18 @@ r.days>=30 ? badge('#d93030','未完了 '+r.days+'日経過') :
 r.days>=20 ? badge('#c07000','未完了 '+r.days+'日経過') :
 badge('#c07000','未完了 '+r.days+'日経過');
 const meikDisp = '<span style="color:#d93030;font-weight:600">未完了</span>';
-return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td>${meikDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
-}).join('') : noRow(8);
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.rcv}</td><td>${meikDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
+}).join('') : noRow(9);
 
 document.getElementById('t3').innerHTML = a3.length ? a3.map(r=>{
 const b=r.elapsed>14?badge('#d93030','超過 '+r.elapsed+'日'):badge('#c07000','遅延 '+r.elapsed+'日');
-return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td>${r.rcv}</td><td class="td-dim">${r.payChk||'未記入'}</td><td class="${r.elapsed>14?'td-red':'td-amber'}">${r.elapsed}日</td><td>${b}</td></tr>`;
-}).join('') : noRow(8);
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.rcv}</td><td class="td-dim">${r.payChk||'未記入'}</td><td class="${r.elapsed>14?'td-red':'td-amber'}">${r.elapsed}日</td><td>${b}</td></tr>`;
+}).join('') : noRow(9);
 
 document.getElementById('t4').innerHTML = a4.length ? a4.map(r=>{
 const b=r.status==='手続き未実施'?badge('#d93030','手続き未実施'):badge('#d93030','還付未入金');
-return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.type}</td><td>${r.tant}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${r.taxProc||'-'}</td><td>${r.taxDate||'-'}</td><td>${b}</td></tr>`;
-}).join('') : noRow(9);
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td>${r.type}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${r.taxProc||'-'}</td><td>${r.taxDate||'-'}</td><td>${b}</td></tr>`;
+}).join('') : noRow(10);
 }
 
 function openModal() {
@@ -527,24 +527,16 @@ if (!r.cust) return;
 const elapsedFromKeiyaku = diffDays(k, TODAY);
 if (elapsedFromKeiyaku === null) return;
 
-// アラーム1: 整備工場 車両出庫遅延（契約日から6日超）
-// 出庫日が記入済みなら「出庫日 - 契約日」で判定、未記入なら「今日 - 契約日」で判定
+// アラーム1: 整備工場 車両出庫遅延（車両出庫日が未記入かつ契約日から7日以上経過）
 const carOutDate = parseDate(r.carOut);
-if (carOutDate) {
-const dd = diffDays(k, carOutDate);
-if (dd > 6) a1.push({...r, days:dd, kind:'completed'});
-} else {
-// 未記入かつ契約日から6日経過しているならアラート
-if (elapsedFromKeiyaku > 6) a1.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
+if (!carOutDate) {
+if (elapsedFromKeiyaku >= 7) a1.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
 }
 
-// アラーム2: 登録依頼遅延（契約日から13日超）
+// アラーム2: 登録依頼遅延（登録依頼日が未記入かつ契約日から13日以上経過）
 const regDate = parseDate(r.regReq);
-if (regDate) {
-const dd = diffDays(k, regDate);
-if (dd > 13) a2.push({...r, days:dd, kind:'completed'});
-} else {
-if (elapsedFromKeiyaku > 13) a2.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
+if (!regDate) {
+if (elapsedFromKeiyaku >= 13) a2.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
 }
 
 // アラーム3: 入金OK（契約日から15日超、〇マーク有無で判定）
@@ -553,13 +545,10 @@ if (!isOk && elapsedFromKeiyaku > 15) {
 a3.push({...r, days:elapsedFromKeiyaku});
 }
 
-// アラーム4: 納車遅延（契約日から15日超、納車完了日未記入も含む）
+// アラーム4: 納車遅延（納車完了日が未記入かつ契約日から14日以上経過）
 const delDate = parseDate(r.delivered);
-if (delDate) {
-const dd = diffDays(k, delDate);
-if (dd > 15) a4.push({...r, days:dd, kind:'completed'});
-} else {
-if (elapsedFromKeiyaku > 15) a4.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
+if (!delDate) {
+if (elapsedFromKeiyaku >= 14) a4.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
 }
 });
 
@@ -578,27 +567,25 @@ const a3max = a3.length ? Math.max(...a3.map(r=>r.days)) : 0;
 const a4max = a4.length ? Math.max(...a4.map(r=>r.days)) : 0;
 
 document.getElementById('sales-cards').innerHTML =
-card('c-red','整備出庫遅延',a1.length,a1.length?'最大 '+a1max+' 日':'')+
-card('c-amber','登録依頼遅延',a2.length,a2.length?'最大 '+a2max+' 日':'')+
+card('c-red','整備出庫 未記入7日以上',a1.length,a1.length?'最大 '+a1max+' 日':'')+
+card('c-amber','登録依頼 未記入13日以上',a2.length,a2.length?'最大 '+a2max+' 日':'')+
 card('c-blue','入金未完了',a3.length,a3.length?'最大 '+a3max+' 日':'')+
-card('c-green','納車遅延',a4.length,a4.length?'最大 '+a4max+' 日':'');
+card('c-green','納車 未記入14日以上',a4.length,a4.length?'最大 '+a4max+' 日':'');
 
 document.getElementById('sales-t1').innerHTML = a1.length ? a1.map(r=>{
-const isPending = r.kind==='pending';
-const b = isPending ? badge('#d93030','未出庫 '+r.days+'日経過') :
-r.days>=14 ? badge('#d93030','大幅遅延 '+r.days+'日') :
-badge('#c07000','遅延 '+r.days+'日');
-const carOutDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.carOut;
-return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${carOutDisp}</td><td class="${isPending||r.days>=14?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+const b = r.days>=30 ? badge('#d93030','未出庫 '+r.days+'日経過') :
+r.days>=14 ? badge('#d93030','未出庫 '+r.days+'日経過') :
+badge('#c07000','未出庫 '+r.days+'日経過');
+const carOutDisp = '<span style="color:#d93030;font-weight:600">未記入</span>';
+return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${carOutDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
 }).join('') : noRow(8);
 
 document.getElementById('sales-t2').innerHTML = a2.length ? a2.map(r=>{
-const isPending = r.kind==='pending';
-const b = isPending ? badge('#d93030','未依頼 '+r.days+'日経過') :
-r.days>=20 ? badge('#d93030','大幅遅延 '+r.days+'日') :
-badge('#c07000','遅延 '+r.days+'日');
-const regDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.regReq;
-return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${regDisp}</td><td class="${isPending||r.days>=20?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+const b = r.days>=30 ? badge('#d93030','未依頼 '+r.days+'日経過') :
+r.days>=20 ? badge('#d93030','未依頼 '+r.days+'日経過') :
+badge('#c07000','未依頼 '+r.days+'日経過');
+const regDisp = '<span style="color:#d93030;font-weight:600">未記入</span>';
+return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${regDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
 }).join('') : noRow(8);
 
 document.getElementById('sales-t3').innerHTML = a3.length ? a3.map(r=>{
@@ -607,12 +594,11 @@ return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r
 }).join('') : noRow(8);
 
 document.getElementById('sales-t4').innerHTML = a4.length ? a4.map(r=>{
-const isPending = r.kind==='pending';
-const b = isPending ? badge('#d93030','未納車 '+r.days+'日経過') :
-r.days>=22 ? badge('#d93030','大幅遅延 '+r.days+'日') :
-badge('#c07000','遅延 '+r.days+'日');
-const delDisp = isPending ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.delivered;
-return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${delDisp}</td><td class="${isPending||r.days>=22?'td-red':'td-amber'}">${r.days}日</td><td>${b}</td></tr>`;
+const b = r.days>=30 ? badge('#d93030','未納車 '+r.days+'日経過') :
+r.days>=22 ? badge('#d93030','未納車 '+r.days+'日経過') :
+badge('#c07000','未納車 '+r.days+'日経過');
+const delDisp = '<span style="color:#d93030;font-weight:600">未記入</span>';
+return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${delDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
 }).join('') : noRow(8);
 }
 </script>
