@@ -126,7 +126,7 @@ tr:hover td{background:#fafafa}
 </div>
 </div>
 <div class="cards" id="sales-cards"></div>
-<div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">整備工場 車両出庫遅延</span><span class="sec-note">車両出庫日が未記入かつ契約日から7日以上経過</span></div>
+<div class="sec"><div class="sec-head"><span class="tag tag-red">アラーム1</span><span class="sec-title">整備工場 車両出庫遅延</span><span class="sec-note">車両出庫日が未記入かつ契約日から7日以上経過（整備「無」は除外）</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>車両出庫日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t1"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-amber">アラーム2</span><span class="sec-title">登録依頼遅延</span><span class="sec-note">登録依頼日が未記入かつ契約日から13日以上経過</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車種</th><th>担当</th><th>契約日</th><th>登録依頼日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="sales-t2"></tbody></table></div>
@@ -153,7 +153,9 @@ tr:hover td{background:#fafafa}
 
 <script>
 const GAS_URL_KEY = 'carseven_gas_url';
-let gasUrl = localStorage.getItem(GAS_URL_KEY) || '';
+// 埋め込みGAS URL（メンバー全員が同じURLを使う場合はここに記入）
+const EMBEDDED_GAS_URL = 'https://script.google.com/a/macros/carseven.jp/s/AKfycbyIEoYD210alCbwKMBCiEalTttBjIz1he3wgblqW4Mw_P17eBXjWITW5IvNkAgrb1BP/exec';
+let gasUrl = EMBEDDED_GAS_URL || localStorage.getItem(GAS_URL_KEY) || '';
 let allRows = [];
 let selStore = '全店舗';
 let selMonths = [];
@@ -527,10 +529,13 @@ if (!r.cust) return;
 const elapsedFromKeiyaku = diffDays(k, TODAY);
 if (elapsedFromKeiyaku === null) return;
 
-// アラーム1: 整備工場 車両出庫遅延（車両出庫日が未記入かつ契約日から7日以上経過）
+// アラーム1: 整備工場 車両出庫遅延（車両出庫日が未記入かつ契約日から7日以上経過、整備=無は除外）
+const seibiVal = String(r.seibi || '').trim();
+if (seibiVal !== '無') {
 const carOutDate = parseDate(r.carOut);
 if (!carOutDate) {
 if (elapsedFromKeiyaku >= 7) a1.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
+}
 }
 
 // アラーム2: 登録依頼遅延（登録依頼日が未記入かつ契約日から13日以上経過）
