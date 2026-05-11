@@ -530,8 +530,10 @@ const elapsedFromKeiyaku = diffDays(k, TODAY);
 if (elapsedFromKeiyaku === null) return;
 
 // アラーム1: 整備工場 車両出庫遅延（車両出庫日が未記入かつ契約日から7日以上経過、整備=無は除外）
+// 「無」「無し」「なし」「ナシ」など、「無」または「なし系」の表記を除外
 const seibiVal = String(r.seibi || '').trim();
-if (seibiVal !== '無') {
+const isNoSeibi = seibiVal === '無' || seibiVal === '無し' || seibiVal === 'なし' || seibiVal === 'ナシ' || seibiVal.startsWith('無');
+if (!isNoSeibi) {
 const carOutDate = parseDate(r.carOut);
 if (!carOutDate) {
 if (elapsedFromKeiyaku >= 7) a1.push({...r, days:elapsedFromKeiyaku, kind:'pending'});
