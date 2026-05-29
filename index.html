@@ -110,8 +110,8 @@ tr:hover td{background:#fafafa}
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>担当</th><th>契約日</th><th>受領日</th><th>名変完了日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t2"></tbody></table></div>
 <div class="sec"><div class="sec-head"><span class="tag tag-blue">アラーム3</span><span class="sec-title">車両代金支払遅延</span><span class="sec-note">受領日から7日超かつ支払完了✓未入力</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>担当</th><th>契約日</th><th>受領日</th><th>支払完了✓</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t3"></tbody></table></div>
-<div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">自動車税還付 未完了（自社名変・普通車）</span></div>
-<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>区分</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>状況</th></tr></thead><tbody id="t4"></tbody></table></div>
+<div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">自動車税還付 未完了（自社名変・普通車）</span><span class="sec-note">宮崎台2605以降：抹消・普・含む・名変から20日超 ／ 他店：自社名変・普通車</span></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>区分</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t4"></tbody></table></div>
 </div>
 
 <!-- 販売納車項目管理ダッシュボード -->
@@ -340,11 +340,30 @@ const d=parseDate(rcvStr);
 if(d){const el=diffDays(d,TODAY);if(el>7&&custName&&carName)a3.push({...r,elapsed:el});}
 }
 }
-if(r.doc&&r.doc.includes('自社名変')&&r.type!=='軽') {
-let status='';
-if(isBlank(r.taxProc))status='手続き未実施';
-else if(isBlank(r.taxDate))status='還付未入金';
-if(status)a4.push({...r,status});
+// アラーム4: 宮崎台・2605以降は独自条件
+if (r.store === '川崎宮崎台' && r.month >= '2605') {
+  const taxIncl = String(r.taxIncl || '').trim();
+  const isTaxInclYes = taxIncl.includes('含む') && !taxIncl.includes('含まない');
+  if (r.type === '普' && isTaxInclYes && r.doc && r.doc.includes('抹消')) {
+    const meikDate = parseDate(r.meik);
+    if (meikDate) {
+      const taxProcDate = parseDate(r.taxProc);
+      const compareDate = taxProcDate || TODAY;
+      const days = diffDays(meikDate, compareDate);
+      if (days !== null && days > 20) {
+        const status = isBlank(r.taxProc) ? '手続き未実施' : '手続き済（経過超過）';
+        a4.push({...r, days, status});
+      }
+    }
+  }
+} else {
+  // 宮崎台2605以外: 既存ロジック
+  if(r.doc&&r.doc.includes('自社名変')&&r.type!=='軽') {
+    let status='';
+    if(isBlank(r.taxProc))status='手続き未実施';
+    else if(isBlank(r.taxDate))status='還付未入金';
+    if(status)a4.push({...r,status});
+  }
 }
 });
 return {a1,a2,a3,a4};
@@ -423,9 +442,14 @@ return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td>
 }).join('') : noRow(10);
 
 document.getElementById('t4').innerHTML = a4.length ? a4.map(r=>{
-const b=r.status==='手続き未実施'?badge('#d93030','手続き未実施'):badge('#d93030','還付未入金');
-return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td class="td-dim">${r.vin||'-'}</td><td>${r.type}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${r.taxProc||'-'}</td><td>${r.taxDate||'-'}</td><td>${b}</td></tr>`;
-}).join('') : noRow(11);
+const isMiyazaki = r.store === '川崎宮崎台';
+const b = r.status === '手続き未実施' ? badge('#d93030','手続き未実施') :
+          r.status === '手続き済（経過超過）' ? badge('#c07000','手続き済（経過超過）') :
+          badge('#d93030','還付未入金');
+const taxProcDisp = isBlank(r.taxProc) ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.taxProc;
+const daysDisp = r.days !== undefined ? `<td class="td-red">${r.days}日</td>` : `<td>${r.taxDate||'-'}</td>`;
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td class="td-dim">${r.vin||'-'}</td><td>${r.type}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${taxProcDisp}</td>${daysDisp}<td>${b}</td></tr>`;
+}).join('') : noRow(12);
 }
 
 function openModal() {
