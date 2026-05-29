@@ -346,7 +346,7 @@ if(d){const el=diffDays(d,TODAY);if(el>7&&custName&&carName)a3.push({...r,elapse
 // アラーム4: 宮崎台2605以降は独自条件のみ・既存ロジックは適用しない
 if (r.store === '川崎宮崎台' && r.month >= '2605') {
   const taxIncl = String(r.taxIncl || '').trim();
-  const isTaxInclYes = taxIncl.includes('含む') && !taxIncl.includes('含まない');
+  const isTaxInclYes = taxIncl.includes('含') && !taxIncl.includes('含まない');
   if (r.type === '普' && isTaxInclYes && r.doc && r.doc.includes('抹消')) {
     const meikDate = parseDate(r.meik);
     if (meikDate) {
@@ -375,7 +375,7 @@ if (r.store === '川崎宮崎台' && r.month >= '2605') {
 rows.forEach(r => {
   if (r.store !== '川崎宮崎台' || r.month < '2605') return;
   const jibaiIncl = String(r.jibaiIncl || '').trim();
-  const isJibaiInclYes = jibaiIncl.includes('含む') && !jibaiIncl.includes('含まない');
+  const isJibaiInclYes = jibaiIncl.includes('含') && !jibaiIncl.includes('含まない');
   if (!isJibaiInclYes) return;
   const jibaiDays = parseInt(String(r.jibaiDays || '').replace(/[^\d]/g, ''), 10);
   if (isNaN(jibaiDays) || jibaiDays < 60) return;
