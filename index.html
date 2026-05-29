@@ -88,6 +88,7 @@ tr:hover td{background:#fafafa}
 <div class="tabs">
 <button class="tab active" id="tab-weekly" onclick="switchTab('weekly')">📋 買取項目管理</button>
 <button class="tab" id="tab-sales" onclick="switchTab('sales')">🚗 販売納車項目管理</button>
+<button class="tab" id="tab-delivery" onclick="switchTab('delivery')">📊 納車日数管理</button>
 </div>
 <div id="error-area"></div>
 <div id="loading"><div class="spinner"></div>スプレッドシートからデータを取得中...<br><small style="color:#bbb;margin-top:8px;display:block">初回は30〜60秒かかる場合があります</small></div>
@@ -115,6 +116,22 @@ tr:hover td{background:#fafafa}
 </div>
 <div class="sec" id="sec-t5"><div class="sec-head"><span class="tag tag-amber">アラーム5</span><span class="sec-title">自賠責解約 未手続<span style="font-size:11px;color:#888;margin-left:6px">[川崎宮崎台]</span></span><span class="sec-note">2605以降・J列「含む」・AE列60日以上・名変完了から解約手続き対応日が20日超</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>解約手続き日</th><th>自賠責残日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t5"></tbody></table></div>
+</div>
+
+<!-- 納車日数管理ダッシュボード -->
+<div id="delivery-main" style="display:none">
+<div class="filter-bar">
+<div class="filter-label">🏪 店舗</div>
+<div class="chips" id="delivery-store-chips"></div>
+<div class="filter-footer">
+<button class="btn-reset" onclick="deliveryResetFilter()">リセット</button>
+<button class="btn-reload-inline" id="btn-delivery-reload" onclick="loadDeliveryData()" title="最新データに更新">🔄 更新</button>
+<span class="filter-info" id="delivery-filter-info"></span>
+</div>
+</div>
+<div id="delivery-content">
+<div style="text-align:center;color:#aaa;padding:40px">データ読み込み中...</div>
+</div>
 </div>
 
 <!-- 販売納車項目管理ダッシュボード -->
@@ -167,6 +184,9 @@ let currentTab = 'weekly';
 let salesRows = [];
 let salesLoaded = false;
 let salesSelStore = '全店舗';
+let deliveryLoaded = false;
+let deliverySelStore = '全店舗';
+let deliveryData = null;
 
 window.onload = function() {
 if (!gasUrl) { openModal(); return; }
@@ -177,10 +197,13 @@ function switchTab(tab) {
 currentTab = tab;
 document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly');
 document.getElementById('tab-sales').classList.toggle('active', tab==='sales');
+document.getElementById('tab-delivery').classList.toggle('active', tab==='delivery');
 document.getElementById('main').style.display = tab==='weekly' ? 'block' : 'none';
 document.getElementById('sales-main').style.display = tab==='sales' ? 'block' : 'none';
+document.getElementById('delivery-main').style.display = tab==='delivery' ? 'block' : 'none';
 document.getElementById('sec-t5').style.display = tab==='weekly' ? '' : 'none';
 if (tab==='sales' && !salesLoaded) loadSalesData();
+if (tab==='delivery' && !deliveryLoaded) loadDeliveryData();
 }
 
 // ===== JSONP方式でデータ取得 =====
@@ -666,6 +689,185 @@ const delDisp = '<span style="color:#d93030;font-weight:600">未記入</span>';
 return `<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car} ${r.model||''}</td><td class="td-dim">${r.vin||'-'}</td><td>${r.tant}</td><td>${r.keiyaku}</td><td>${delDisp}</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
 }).join('') : noRow(9);
 }
+// ===== 納車日数管理 =====
+const DELIVERY_GAS_ID = '1PRCujaytquEhRbDvn-X5eui4xQz7Q8KD5vnk-uIfewo';
+
+const STORES_DELIVERY = ['宮崎台','多摩','平塚','陽光台','所沢','２３号鈴鹿','静岡流通通り'];
+const MONTHS_JP = ['10月','11月','12月','1月','2月','3月','4月','5月','6月','7月','8月','9月'];
+
+// 静的データ（GASから取得したデータを構造化）
+const DELIVERY_STATIC = {
+  '宮崎台':    { sales: [11,5,9,13,11,9,12,5,null,null,null,null], deliveries: [4,10,3,15,9,13,5,7,null,null,null,null], avgDays: [16.3,17.4,23.3,26.5,21.0,21.1,18.0,27.3,null,null,null,null], overall: 22.3 },
+  '多摩':      { sales: [2,4,2,8,9,10,7,10,null,null,null,null],  deliveries: [0,3,5,2,9,11,12,4,null,null,null,null],  avgDays: [null,22.3,17.4,22.0,21.4,18.9,14.2,11.8,null,null,null,null], overall: 17.7 },
+  '平塚':      { sales: [3,6,3,10,10,9,15,8,null,null,null,null],  deliveries: [0,6,3,3,13,7,16,5,null,null,null,null],  avgDays: [null,20.5,26.7,31.0,20.4,20.9,18.3,21.3,null,null,null,null], overall: 20.9 },
+  '陽光台':    { sales: [5,6,10,10,11,9,4,8,null,null,null,null],  deliveries: [3,6,10,9,10,6,6,3,null,null,null,null],  avgDays: [10.0,13.5,10.1,14.2,21.1,17.1,23.8,15.3,null,null,null,null], overall: 15.5 },
+  '所沢':      { sales: [2,9,7,10,12,10,6,4,null,null,null,null],  deliveries: [2,5,9,8,11,13,7,1,null,null,null,null],  avgDays: [null,14.6,22.7,19.9,24.5,19.2,15.6,13.0,null,null,null,null], overall: 19.9 },
+  '２３号鈴鹿': { sales: [4,3,3,7,4,13,7,2,null,null,null,null],  deliveries: [2,3,3,5,6,12,8,1,null,null,null,null],  avgDays: [25.0,18.3,20.7,18.6,21.5,18.4,18.3,17.3,null,null,null,null], overall: 19.7 },
+  '静岡流通通り':{ sales: [0,0,0,0,0,0,0,3,null,null,null,null], deliveries: [0,0,0,0,0,0,0,1,null,null,null,null], avgDays: [null,null,null,null,null,null,null,8.0,null,null,null,null], overall: null },
+};
+const TOTAL_DELIVERY = { sales:[27,33,34,58,57,60,51,37,null,null,null,null], deliveries:[11,33,33,42,58,62,54,21,null,null,null,null], avgDays:[17.1,17.8,20.1,22.0,21.7,19.3,18.0,16.3,null,null,null,null], overall: 19.3 };
+
+function loadDeliveryData() {
+  deliveryLoaded = true;
+  deliveryData = DELIVERY_STATIC;
+  renderDelivery();
+}
+
+function deliveryResetFilter() {
+  deliverySelStore = '全店舗';
+  document.querySelectorAll('#delivery-store-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.val === '全店舗');
+  });
+  renderDelivery();
+}
+
+function initDeliveryFilters() {
+  const storeChips = document.getElementById('delivery-store-chips');
+  const stores = ['全店舗', ...STORES_DELIVERY];
+  storeChips.innerHTML = stores.map(s =>
+    `<button class="chip${s==='全店舗'?' active':''}" data-val="${s}" onclick="deliverySetStore('${s}')">${s}</button>`
+  ).join('');
+}
+
+function deliverySetStore(store) {
+  deliverySelStore = store;
+  document.querySelectorAll('#delivery-store-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.val === store);
+  });
+  renderDelivery();
+}
+
+function renderDelivery() {
+  initDeliveryFilters();
+  const stores = deliverySelStore === '全店舗' ? STORES_DELIVERY : [deliverySelStore];
+  let html = '';
+
+  // 目標ライン（参考値）
+  const TARGET = 20;
+
+  // 月別平均日数チャート（棒グラフ HTML）
+  function makeBar(val, max) {
+    if (val === null) return '<td style="background:#f9f9f9;color:#ccc;text-align:center;font-size:11px">－</td>';
+    const pct = Math.min(100, (val / max) * 100);
+    const color = val <= 18 ? '#0aa56e' : val <= 22 ? '#f59e0b' : '#d93030';
+    return `<td style="padding:6px 8px;vertical-align:middle">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="flex:1;background:#f0f0f0;border-radius:4px;height:14px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width .4s"></div>
+        </div>
+        <span style="font-size:12px;font-weight:600;color:${color};min-width:32px;text-align:right">${val.toFixed(1)}</span>
+      </div>
+    </td>`;
+  }
+
+  // 全店舗サマリーカード
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">';
+  const summaryStores = deliverySelStore === '全店舗' ? STORES_DELIVERY : [deliverySelStore];
+  summaryStores.forEach(s => {
+    const d = DELIVERY_STATIC[s];
+    const totalSales = d.sales.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    const totalDel = d.deliveries.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    const ov = d.overall;
+    const ovColor = ov===null?'#aaa':ov<=18?'#0aa56e':ov<=22?'#f59e0b':'#d93030';
+    html += `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-top:3px solid ${ovColor}">
+      <div style="font-size:12px;font-weight:700;color:#444;margin-bottom:6px">${s}</div>
+      <div style="font-size:22px;font-weight:800;color:${ovColor}">${ov!==null?ov.toFixed(1)+'日':'－'}</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">平均納車日数</div>
+      <div style="font-size:11px;color:#666;margin-top:6px;border-top:1px solid #f0f0f0;padding-top:6px">
+        販売 <b>${totalSales}</b>台 ／ 納車 <b>${totalDel}</b>台
+      </div>
+    </div>`;
+  });
+  // TOTALカード（全店舗表示時）
+  if (deliverySelStore === '全店舗') {
+    const ov = TOTAL_DELIVERY.overall;
+    const ovColor = ov<=18?'#0aa56e':ov<=22?'#f59e0b':'#d93030';
+    const ts = TOTAL_DELIVERY.sales.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    const td2 = TOTAL_DELIVERY.deliveries.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    html += `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-top:3px solid ${ovColor};border:2px solid #185fa5">
+      <div style="font-size:12px;font-weight:700;color:#185fa5;margin-bottom:6px">◇ TOTAL</div>
+      <div style="font-size:22px;font-weight:800;color:${ovColor}">${ov.toFixed(1)}日</div>
+      <div style="font-size:11px;color:#888;margin-top:4px">全店平均</div>
+      <div style="font-size:11px;color:#666;margin-top:6px;border-top:1px solid #f0f0f0;padding-top:6px">
+        販売 <b>${ts}</b>台 ／ 納車 <b>${td2}</b>台
+      </div>
+    </div>`;
+  }
+  html += '</div>';
+
+  // 月別データテーブル（店舗別）
+  const maxDays = 35;
+  stores.forEach(store => {
+    const d = DELIVERY_STATIC[store];
+    html += `<div class="sec" style="margin-bottom:16px">
+    <div class="sec-head"><span class="tag tag-blue" style="background:#185fa5">${store}</span>
+    <span class="sec-title">月別 納車平均日数・販売/納車台数</span>
+    <span class="sec-note" style="color:#888">🟢 18日以内 🟡 19〜22日 🔴 23日以上</span></div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f5f7fb">
+      <th style="padding:8px 10px;text-align:left;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb">指標</th>`;
+    MONTHS_JP.forEach(m => {
+      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${m}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+
+    // 平均納車日数行
+    html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;font-weight:700;color:#444;white-space:nowrap">平均納車日数</td>`;
+    d.avgDays.forEach(v => { html += makeBar(v, maxDays); });
+    html += `</tr>`;
+
+    // 販売台数行
+    html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#555;white-space:nowrap">販売台数</td>`;
+    d.sales.forEach(v => {
+      html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center;font-size:11px">－</td>'
+        : `<td style="text-align:center;font-weight:600;color:#185fa5;padding:8px 6px">${v}</td>`;
+    });
+    html += `</tr>`;
+
+    // 納車台数行
+    html += `<tr><td style="padding:8px 10px;color:#555;white-space:nowrap">納車台数</td>`;
+    d.deliveries.forEach(v => {
+      html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center;font-size:11px">－</td>'
+        : `<td style="text-align:center;font-weight:600;color:#0aa56e;padding:8px 6px">${v}</td>`;
+    });
+    html += `</tr>`;
+    html += `</tbody></table></div></div>`;
+  });
+
+  // 全店舗表示時：TOTAL行も追加
+  if (deliverySelStore === '全店舗') {
+    html += `<div class="sec"><div class="sec-head"><span class="tag tag-blue" style="background:#185fa5">◇ TOTAL（全店合計）</span></div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f5f7fb">
+      <th style="padding:8px 10px;text-align:left;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb">指標</th>`;
+    MONTHS_JP.forEach(m => {
+      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${m}</th>`;
+    });
+    html += `</tr></thead><tbody>`;
+    html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;font-weight:700;color:#444">平均納車日数</td>`;
+    TOTAL_DELIVERY.avgDays.forEach(v => { html += makeBar(v, maxDays); });
+    html += `</tr><tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#555">販売台数</td>`;
+    TOTAL_DELIVERY.sales.forEach(v => {
+      html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center">－</td>'
+        : `<td style="text-align:center;font-weight:600;color:#185fa5;padding:8px 6px">${v}</td>`;
+    });
+    html += `</tr><tr><td style="padding:8px 10px;color:#555">納車台数</td>`;
+    TOTAL_DELIVERY.deliveries.forEach(v => {
+      html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center">－</td>'
+        : `<td style="text-align:center;font-weight:600;color:#0aa56e;padding:8px 6px">${v}</td>`;
+    });
+    html += `</tr></tbody></table></div></div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('delivery-content').innerHTML = html;
+  document.getElementById('delivery-filter-info').textContent =
+    deliverySelStore === '全店舗' ? `全${STORES_DELIVERY.length}店舗` : deliverySelStore;
+}
+
 </script>
 </body>
 </html>
