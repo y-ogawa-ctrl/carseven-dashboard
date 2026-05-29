@@ -113,6 +113,9 @@ tr:hover td{background:#fafafa}
 <div class="sec"><div class="sec-head"><span class="tag tag-green">アラーム4</span><span class="sec-title">自動車税還付 未完了（自社名変・普通車）</span><span class="sec-note">宮崎台2605以降：抹消・普・含む・名変から20日超 ／ 他店：自社名変・普通車</span></div>
 <table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>区分</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>還付手続き日</th><th>還付日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t4"></tbody></table></div>
 </div>
+<div class="sec" id="sec-t5"><div class="sec-head"><span class="tag tag-amber">アラーム5</span><span class="sec-title">自賠責解約 未手続<span style="font-size:11px;color:#888;margin-left:6px">[川崎宮崎台]</span></span><span class="sec-note">2605以降・J列「含む」・AE列60日以上・名変完了から解約手続き対応日が20日超</span></div>
+<table><thead><tr><th>店舗</th><th>顧客名</th><th>車名</th><th>車体番号</th><th>担当</th><th>契約日</th><th>名変完了日</th><th>解約手続き日</th><th>自賠責残日</th><th>経過日数</th><th>状況</th></tr></thead><tbody id="t5"></tbody></table></div>
+</div>
 
 <!-- 販売納車項目管理ダッシュボード -->
 <div id="sales-main" style="display:none">
@@ -315,7 +318,7 @@ function isCancelled(v) { return String(v).includes('キャンセル')||String(v
 function isPayOk(v) { if(!v&&v!==0)return false; const s=String(v).trim(); return s!==''&&s!=='－'&&s!=='-'; }
 
 function calcAlarms(rows) {
-const a1=[],a2=[],a3=[],a4=[];
+const a1=[],a2=[],a3=[],a4=[],a5=[];
 rows.forEach(r => {
 const rcvStr=r.rcv, custName=r.cust, carName=r.car;
 if(isScheduled(rcvStr)&&!isCancelled(rcvStr)&&custName&&carName) {
@@ -366,7 +369,27 @@ if (r.store === '川崎宮崎台' && r.month >= '2605') {
   }
 }
 });
-return {a1,a2,a3,a4};
+
+// アラーム5: 宮崎台・2605以降 自賠責解約未手続
+rows.forEach(r => {
+  if (r.store !== '川崎宮崎台' || r.month < '2605') return;
+  const jibaiIncl = String(r.jibaiIncl || '').trim();
+  const isJibaiInclYes = jibaiIncl.includes('含む') && !jibaiIncl.includes('含まない');
+  if (!isJibaiInclYes) return;
+  const jibaiDays = parseInt(String(r.jibaiDays || '').replace(/[^\d]/g, ''), 10);
+  if (isNaN(jibaiDays) || jibaiDays < 60) return;
+  const meikDate = parseDate(r.meik);
+  if (!meikDate) return;
+  const jibaiProcDate = parseDate(r.jibaiProc);
+  const compareDate = jibaiProcDate || TODAY;
+  const days = diffDays(meikDate, compareDate);
+  if (days !== null && days > 20) {
+    const status = isBlank(r.jibaiProc) ? '手続き未実施' : '手続き済（経過超過）';
+    a5.push({...r, days, jibaiDays, status});
+  }
+});
+
+return {a1,a2,a3,a4,a5};
 }
 
 function badge(color,label){return`<span class="badge" style="background:${color}">${label}</span>`}
@@ -386,7 +409,7 @@ return`<div class="card ${cls}"><div class="card-label">${label}</div>
 
 function render() {
 const rows = filtered();
-const {a1,a2,a3,a4} = calcAlarms(rows);
+const {a1,a2,a3,a4,a5} = calcAlarms(rows);
 
 const parts=[];
 if(selStore!=='全店舗')parts.push('店舗：'+selStore);
@@ -414,7 +437,8 @@ document.getElementById('cards').innerHTML =
 cardSplit('c-red','車両受領状況','超過',a1over,a1over?'最大 '+a1maxOver+' 日':'','入庫予定',a1future,a1nearestFuture!==null?'最短 '+Math.abs(a1nearestFuture)+' 日後':'')+
 card('c-amber','名変未完了 10日以上経過',a2.length,a2sub)+
 card('c-blue','支払遅延 受領後7日超',a3.length,a3.length?'最大 '+a3max+' 日':'')+
-card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件');
+card('c-green','自税還付 未手続き',a4pend,'還付未入金: '+a4paid+'件')+
+card('c-amber','自賠責解約 未手続き',a5.filter(r=>r.status==='手続き未実施').length, a5.length ? '対象 '+a5.length+'件' : '');
 
 document.getElementById('t1').innerHTML = a1.length ? a1.map(r=>{
 let b, dispDays, tdClass='';
@@ -450,6 +474,12 @@ const taxProcDisp = isBlank(r.taxProc) ? '<span style="color:#d93030;font-weight
 const daysDisp = r.days !== undefined ? `<td class="td-red">${r.days}日</td>` : `<td>${r.taxDate||'-'}</td>`;
 return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td class="td-dim">${r.vin||'-'}</td><td>${r.type}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.meik}</td><td class="${isBlank(r.taxProc)?'td-red':''}">${taxProcDisp}</td>${daysDisp}<td>${b}</td></tr>`;
 }).join('') : noRow(12);
+
+document.getElementById('t5').innerHTML = a5.length ? a5.map(r=>{
+const b = r.status === '手続き未実施' ? badge('#c07000','手続き未実施') : badge('#999','手続き済（確認）');
+const jibaiProcDisp = isBlank(r.jibaiProc) ? '<span style="color:#d93030;font-weight:600">未記入</span>' : r.jibaiProc;
+return`<tr><td>${r.store}</td><td>${r.cust}</td><td class="td-dim">${r.car}</td><td class="td-dim">${r.vin||'-'}</td><td>${r.tant}</td><td class="td-dim">${r.keiyaku||'-'}</td><td>${r.meik}</td><td>${jibaiProcDisp}</td><td class="td-amber">${r.jibaiDays}日</td><td class="td-red">${r.days}日</td><td>${b}</td></tr>`;
+}).join('') : noRow(11);
 }
 
 function openModal() {
