@@ -123,6 +123,12 @@ tr:hover td{background:#fafafa}
 <div class="filter-bar">
 <div class="filter-label">🏪 店舗</div>
 <div class="chips" id="delivery-store-chips"></div>
+<div class="filter-label" style="margin-top:8px">📅 期</div>
+<div class="chips">
+  <button class="chip active" id="chip-period-all" onclick="deliverySetPeriod('all')">全期間</button>
+  <button class="chip" id="chip-period-first" onclick="deliverySetPeriod('first')">上期（10〜3月）</button>
+  <button class="chip" id="chip-period-second" onclick="deliverySetPeriod('second')">下期（4〜9月）</button>
+</div>
 <div class="filter-footer">
 <button class="btn-reset" onclick="deliveryResetFilter()">リセット</button>
 <button class="btn-reload-inline" id="btn-delivery-reload" onclick="loadDeliveryData()" title="最新データに更新">🔄 更新</button>
@@ -186,6 +192,7 @@ let salesLoaded = false;
 let salesSelStore = '全店舗';
 let deliveryLoaded = false;
 let deliverySelStore = '全店舗';
+let deliveryPeriod = 'all'; // 'all' | 'first'(10-3月) | 'second'(4-9月)
 let deliveryData = null;
 
 window.onload = function() {
@@ -715,8 +722,22 @@ function loadDeliveryData() {
 
 function deliveryResetFilter() {
   deliverySelStore = '全店舗';
+  deliveryPeriod = 'all';
   document.querySelectorAll('#delivery-store-chips .chip').forEach(c => {
     c.classList.toggle('active', c.dataset.val === '全店舗');
+  });
+  ['all','first','second'].forEach(p => {
+    const el = document.getElementById('chip-period-' + p);
+    if (el) el.classList.toggle('active', p === 'all');
+  });
+  renderDelivery();
+}
+
+function deliverySetPeriod(period) {
+  deliveryPeriod = period;
+  ['all','first','second'].forEach(p => {
+    const el = document.getElementById('chip-period-' + p);
+    if (el) el.classList.toggle('active', p === period);
   });
   renderDelivery();
 }
@@ -742,6 +763,27 @@ function renderDelivery() {
   const stores = deliverySelStore === '全店舗' ? STORES_DELIVERY : [deliverySelStore];
   let html = '';
 
+  // 期によって表示する月インデックスを絞る
+  // MONTHS_JP = ['10月','11月','12月','1月','2月','3月','4月','8月','9月']
+  // インデックス: 0=10月,1=11月,2=12月,3=1月,4=2月,5=3月,6=4月,7=5月,8=6月,9=7月,10=8月,11=9月
+  const FIRST_IDX  = [0,1,2,3,4,5];   // 上期: 10〜3月
+  const SECOND_IDX = [6,7,8,9,10,11]; // 下期: 4〜9月
+  const visibleIdx = deliveryPeriod === 'first' ? FIRST_IDX
+                   : deliveryPeriod === 'second' ? SECOND_IDX
+                   : [...Array(12).keys()];
+
+  const periodLabel = deliveryPeriod === 'first' ? '上期（10〜3月）'
+                    : deliveryPeriod === 'second' ? '下期（4〜9月）' : '全期間';
+
+  // 期フィルター適用済みデータのサマリー計算ヘルパー
+  function filteredSum(arr) {
+    return visibleIdx.reduce((s, i) => s + (arr[i] != null ? arr[i] : 0), 0);
+  }
+  function filteredAvg(arr) {
+    const vals = visibleIdx.map(i => arr[i]).filter(v => v != null);
+    return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+  }
+
   // 目標ライン（参考値）
   const TARGET = 20;
 
@@ -766,9 +808,9 @@ function renderDelivery() {
   const summaryStores = deliverySelStore === '全店舗' ? STORES_DELIVERY : [deliverySelStore];
   summaryStores.forEach(s => {
     const d = DELIVERY_STATIC[s];
-    const totalSales = d.sales.filter(v=>v!==null).reduce((a,b)=>a+b,0);
-    const totalDel = d.deliveries.filter(v=>v!==null).reduce((a,b)=>a+b,0);
-    const ov = d.overall;
+    const totalSales = filteredSum(d.sales);
+    const totalDel = filteredSum(d.deliveries);
+    const ov = deliveryPeriod === 'all' ? d.overall : filteredAvg(d.avgDays);
     const ovColor = ov===null?'#aaa':ov<=18?'#0aa56e':ov<=22?'#f59e0b':'#d93030';
     html += `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-top:3px solid ${ovColor}">
       <div style="font-size:12px;font-weight:700;color:#444;margin-bottom:6px">${s}</div>
@@ -781,10 +823,10 @@ function renderDelivery() {
   });
   // TOTALカード（全店舗表示時）
   if (deliverySelStore === '全店舗') {
-    const ov = TOTAL_DELIVERY.overall;
-    const ovColor = ov<=18?'#0aa56e':ov<=22?'#f59e0b':'#d93030';
-    const ts = TOTAL_DELIVERY.sales.filter(v=>v!==null).reduce((a,b)=>a+b,0);
-    const td2 = TOTAL_DELIVERY.deliveries.filter(v=>v!==null).reduce((a,b)=>a+b,0);
+    const ov = deliveryPeriod === 'all' ? TOTAL_DELIVERY.overall : filteredAvg(TOTAL_DELIVERY.avgDays);
+    const ovColor = ov===null?'#aaa':ov<=18?'#0aa56e':ov<=22?'#f59e0b':'#d93030';
+    const ts = filteredSum(TOTAL_DELIVERY.sales);
+    const td2 = filteredSum(TOTAL_DELIVERY.deliveries);
     html += `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);border-top:3px solid ${ovColor};border:2px solid #185fa5">
       <div style="font-size:12px;font-weight:700;color:#185fa5;margin-bottom:6px">◇ TOTAL</div>
       <div style="font-size:22px;font-weight:800;color:${ovColor}">${ov.toFixed(1)}日</div>
@@ -803,24 +845,25 @@ function renderDelivery() {
     html += `<div class="sec" style="margin-bottom:16px">
     <div class="sec-head"><span style="font-size:14px;font-weight:700;color:#333">${store}</span>
     <span class="sec-title">月別 納車平均日数・販売/納車台数</span>
-    <span class="sec-note" style="color:#888">🟢 18日以内 🟡 19〜22日 🔴 23日以上</span></div>
+    <span class="sec-note" style="color:#888">${periodLabel} ／ 🟢 18日以内 🟡 19〜22日 🔴 23日以上</span></div>
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f5f7fb">
       <th style="padding:8px 10px;text-align:left;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb">指標</th>`;
-    MONTHS_JP.forEach(m => {
-      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${m}</th>`;
+    visibleIdx.forEach(i => {
+      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${MONTHS_JP[i]}</th>`;
     });
     html += `</tr></thead><tbody>`;
 
     // 平均納車日数行
     html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;font-weight:700;color:#444;white-space:nowrap">平均納車日数</td>`;
-    d.avgDays.forEach(v => { html += makeBar(v, maxDays); });
+    visibleIdx.forEach(i => { html += makeBar(d.avgDays[i], maxDays); });
     html += `</tr>`;
 
     // 販売台数行
     html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#555;white-space:nowrap">販売台数</td>`;
-    d.sales.forEach(v => {
+    visibleIdx.forEach(i => {
+      const v = d.sales[i];
       html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center;font-size:11px">－</td>'
         : `<td style="text-align:center;font-weight:600;color:#185fa5;padding:8px 6px">${v}</td>`;
     });
@@ -828,7 +871,8 @@ function renderDelivery() {
 
     // 納車台数行
     html += `<tr><td style="padding:8px 10px;color:#555;white-space:nowrap">納車台数</td>`;
-    d.deliveries.forEach(v => {
+    visibleIdx.forEach(i => {
+      const v = d.deliveries[i];
       html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center;font-size:11px">－</td>'
         : `<td style="text-align:center;font-weight:600;color:#0aa56e;padding:8px 6px">${v}</td>`;
     });
@@ -843,19 +887,21 @@ function renderDelivery() {
     <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f5f7fb">
       <th style="padding:8px 10px;text-align:left;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb">指標</th>`;
-    MONTHS_JP.forEach(m => {
-      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${m}</th>`;
+    visibleIdx.forEach(i => {
+      html += `<th style="padding:8px 6px;text-align:center;color:#666;font-weight:600;border-bottom:2px solid #e5e7eb;min-width:60px">${MONTHS_JP[i]}</th>`;
     });
     html += `</tr></thead><tbody>`;
     html += `<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;font-weight:700;color:#444">平均納車日数</td>`;
-    TOTAL_DELIVERY.avgDays.forEach(v => { html += makeBar(v, maxDays); });
+    visibleIdx.forEach(i => { html += makeBar(TOTAL_DELIVERY.avgDays[i], maxDays); });
     html += `</tr><tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#555">販売台数</td>`;
-    TOTAL_DELIVERY.sales.forEach(v => {
+    visibleIdx.forEach(i => {
+      const v = TOTAL_DELIVERY.sales[i];
       html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center">－</td>'
         : `<td style="text-align:center;font-weight:600;color:#185fa5;padding:8px 6px">${v}</td>`;
     });
     html += `</tr><tr><td style="padding:8px 10px;color:#555">納車台数</td>`;
-    TOTAL_DELIVERY.deliveries.forEach(v => {
+    visibleIdx.forEach(i => {
+      const v = TOTAL_DELIVERY.deliveries[i];
       html += v===null ? '<td style="background:#f9f9f9;color:#ccc;text-align:center">－</td>'
         : `<td style="text-align:center;font-weight:600;color:#0aa56e;padding:8px 6px">${v}</td>`;
     });
