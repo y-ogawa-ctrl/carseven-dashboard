@@ -179,6 +179,7 @@ document.getElementById('tab-weekly').classList.toggle('active', tab==='weekly')
 document.getElementById('tab-sales').classList.toggle('active', tab==='sales');
 document.getElementById('main').style.display = tab==='weekly' ? 'block' : 'none';
 document.getElementById('sales-main').style.display = tab==='sales' ? 'block' : 'none';
+document.getElementById('sec-t5').style.display = tab==='weekly' ? '' : 'none';
 if (tab==='sales' && !salesLoaded) loadSalesData();
 }
 
