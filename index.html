@@ -350,6 +350,7 @@ if (r.store === '川崎宮崎台' && r.month >= '2605') {
   if (r.type === '普' && isTaxInclYes && r.doc && r.doc.includes('抹消')) {
     const meikDate = parseDate(r.meik);
     if (meikDate) {
+      if (r.taxProc && r.taxProc.includes('×')) return;
       const taxProcDate = parseDate(r.taxProc);
       const compareDate = taxProcDate || TODAY;
       const days = diffDays(meikDate, compareDate);
@@ -381,6 +382,7 @@ rows.forEach(r => {
   if (isNaN(jibaiDays) || jibaiDays < 60) return;
   const meikDate = parseDate(r.meik);
   if (!meikDate) return;
+  if (r.jibaiProc && r.jibaiProc.includes('×')) return;
   const jibaiProcDate = parseDate(r.jibaiProc);
   const compareDate = jibaiProcDate || TODAY;
   const days = diffDays(meikDate, compareDate);
