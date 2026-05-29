@@ -801,7 +801,7 @@ function renderDelivery() {
   stores.forEach(store => {
     const d = DELIVERY_STATIC[store];
     html += `<div class="sec" style="margin-bottom:16px">
-    <div class="sec-head"><span class="tag tag-blue" style="background:#185fa5">${store}</span>
+    <div class="sec-head"><span style="font-size:14px;font-weight:700;color:#333">${store}</span>
     <span class="sec-title">月別 納車平均日数・販売/納車台数</span>
     <span class="sec-note" style="color:#888">🟢 18日以内 🟡 19〜22日 🔴 23日以上</span></div>
     <div style="overflow-x:auto">
@@ -838,7 +838,7 @@ function renderDelivery() {
 
   // 全店舗表示時：TOTAL行も追加
   if (deliverySelStore === '全店舗') {
-    html += `<div class="sec"><div class="sec-head"><span class="tag tag-blue" style="background:#185fa5">◇ TOTAL（全店合計）</span></div>
+    html += `<div class="sec"><div class="sec-head"><span style="font-size:14px;font-weight:700;color:#185fa5">◇ TOTAL（全店合計）</span></div>
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f5f7fb">
