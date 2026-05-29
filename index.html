@@ -343,7 +343,7 @@ const d=parseDate(rcvStr);
 if(d){const el=diffDays(d,TODAY);if(el>7&&custName&&carName)a3.push({...r,elapsed:el});}
 }
 }
-// アラーム4: 宮崎台・2605以降は独自条件
+// アラーム4: 宮崎台2605以降は独自条件のみ・既存ロジックは適用しない
 if (r.store === '川崎宮崎台' && r.month >= '2605') {
   const taxIncl = String(r.taxIncl || '').trim();
   const isTaxInclYes = taxIncl.includes('含む') && !taxIncl.includes('含まない');
@@ -359,8 +359,9 @@ if (r.store === '川崎宮崎台' && r.month >= '2605') {
       }
     }
   }
-} else {
-  // 宮崎台2605以外: 既存ロジック
+  // 宮崎台2605以降は上記以外の行は一切アラーム4対象にしない
+} else if (r.store !== '川崎宮崎台') {
+  // 宮崎台以外の他店舗のみ: 既存ロジック
   if(r.doc&&r.doc.includes('自社名変')&&r.type!=='軽') {
     let status='';
     if(isBlank(r.taxProc))status='手続き未実施';
