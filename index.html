@@ -712,12 +712,62 @@ const DELIVERY_STATIC = {
   '２３号鈴鹿': { sales: [4,3,3,7,4,13,7,2,null,null,null,null],  deliveries: [2,3,3,5,6,12,8,1,null,null,null,null],  avgDays: [25.0,18.3,20.7,18.6,21.5,18.4,18.3,17.3,null,null,null,null], overall: 19.7 },
   '静岡流通通り':{ sales: [0,0,0,0,0,0,0,3,null,null,null,null], deliveries: [0,0,0,0,0,0,0,1,null,null,null,null], avgDays: [null,null,null,null,null,null,null,8.0,null,null,null,null], overall: null },
 };
-const TOTAL_DELIVERY = { sales:[27,33,34,58,57,60,51,37,null,null,null,null], deliveries:[11,33,33,42,58,62,54,21,null,null,null,null], avgDays:[17.1,17.8,20.1,22.0,21.7,19.3,18.0,16.3,null,null,null,null], overall: 19.3 };
+let TOTAL_DELIVERY = { sales:[27,33,34,58,57,60,51,37,null,null,null,null], deliveries:[11,33,33,42,58,62,54,21,null,null,null,null], avgDays:[17.1,17.8,20.1,22.0,21.7,19.3,18.0,16.3,null,null,null,null], overall: 19.3 };
 
 function loadDeliveryData() {
-  deliveryLoaded = true;
-  deliveryData = DELIVERY_STATIC;
-  renderDelivery();
+  // GAS URL未設定時は静的データにフォールバック
+  if (!gasUrl) {
+    deliveryLoaded = true;
+    deliveryData = DELIVERY_STATIC;
+    renderDelivery();
+    return;
+  }
+
+  document.getElementById('delivery-content').innerHTML =
+    '<div style="padding:40px;text-align:center;color:#888">スプレッドシートから集計中...<br><small>初回は30〜60秒かかる場合があります</small></div>';
+  const reBtn = document.getElementById('btn-delivery-reload');
+  if (reBtn) reBtn.disabled = true;
+
+  const timeoutId = setTimeout(() => {
+    document.getElementById('delivery-content').innerHTML =
+      '<div class="error-box">⏱️ タイムアウト：90秒以内にレスポンスがありませんでした</div>';
+    cleanup();
+  }, 90000);
+
+  const cbName = 'delivery_callback_' + Date.now();
+
+  function cleanup() {
+    clearTimeout(timeoutId);
+    if (reBtn) reBtn.disabled = false;
+    if (window[cbName]) delete window[cbName];
+    const el = document.getElementById(cbName);
+    if (el) el.remove();
+  }
+
+  window[cbName] = function(json) {
+    cleanup();
+    if (!json.ok || !json.data || !json.data.stores || !json.data.total) {
+      document.getElementById('delivery-content').innerHTML =
+        '<div class="error-box">❌ APIエラー: ' + ((json && json.error) || 'データ形式が不正です') + '</div>';
+      return;
+    }
+    deliveryData = json.data.stores;
+    TOTAL_DELIVERY = json.data.total;
+    deliveryLoaded = true;
+    renderDelivery();
+  };
+
+  const sep = gasUrl.indexOf('?') >= 0 ? '&' : '?';
+  const url = gasUrl + sep + 'callback=' + cbName + '&dataset=delivery';
+  const script = document.createElement('script');
+  script.id = cbName;
+  script.src = url;
+  script.onerror = function() {
+    cleanup();
+    document.getElementById('delivery-content').innerHTML =
+      '<div class="error-box">❌ データ取得エラー: scriptロード失敗</div>';
+  };
+  document.body.appendChild(script);
 }
 
 function deliveryResetFilter() {
@@ -807,7 +857,7 @@ function renderDelivery() {
   html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">';
   const summaryStores = deliverySelStore === '全店舗' ? STORES_DELIVERY : [deliverySelStore];
   summaryStores.forEach(s => {
-    const d = DELIVERY_STATIC[s];
+    const d = deliveryData[s];
     const totalSales = filteredSum(d.sales);
     const totalDel = filteredSum(d.deliveries);
     const ov = deliveryPeriod === 'all' ? d.overall : filteredAvg(d.avgDays);
@@ -841,7 +891,7 @@ function renderDelivery() {
   // 月別データテーブル（店舗別）
   const maxDays = 35;
   stores.forEach(store => {
-    const d = DELIVERY_STATIC[store];
+    const d = deliveryData[store];
     html += `<div class="sec" style="margin-bottom:16px">
     <div class="sec-head"><span style="font-size:14px;font-weight:700;color:#333">${store}</span>
     <span class="sec-title">月別 納車平均日数・販売/納車台数</span>
